@@ -2,96 +2,94 @@
 #include <Servo.h>             
 #include <AFMotor.h>           
 
-#define LEFT A5             // Left IR sensor connected to analog pin A5 of Arduino Uno
-#define RIGHT A1            // Right IR sensor connected to analog pin A1 of Arduino Uno
-#define TRIGGER_PIN A2      // Trigger pin connected to analog pin A2 of Arduino Uno
-#define ECHO_PIN A3         // Echo pin connected to analog pin A3 of Arduino Uno
-#define MAX_DISTANCE 50     // Maximum ping distance
+#define LEFT A5             
+#define RIGHT A1            
+#define TRIGGER_PIN A2      
+#define ECHO_PIN A3         
+#define MAX_DISTANCE 50     
 
-unsigned int distance = 0;    // Variable to store ultrasonic sensor distance
-unsigned int Right_Value = 0; // Variable to store Right IR sensor value
-unsigned int Left_Value = 0;  // Variable to store Left IR sensor value
-int d = 10;                   // Distance threshold for following
+unsigned int distance = 0;    
+unsigned int Right_Value = 0; 
+unsigned int Left_Value = 0; 
+int d = 10;                   
 
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);  // NewPing setup of pins and max distance
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);  
 
-// Create motor objects
 AF_DCMotor Motor1(1, MOTOR12_1KHZ);
 AF_DCMotor Motor2(2, MOTOR12_1KHZ);
 AF_DCMotor Motor3(3, MOTOR34_1KHZ);
 AF_DCMotor Motor4(4, MOTOR34_1KHZ);
 
-Servo myservo;  // Create servo object to control the servo
-int servoPosition = 90;  // Variable to store the current servo position
+Servo myservo;  
+int servoPosition = 90;  
 
-// Variable to track the rover's direction (0 = Forward, 1 = Right, 2 = Left, 3 = Stop)
+
 int direction = 3; 
 
 void setup() {
-  Serial.begin(9600);  // Initialize serial communication at 9600 bits per second
-  myservo.attach(10);  // Servo attached to pin 10 of Arduino UNO
+  Serial.begin(9600);  
+  myservo.attach(10);  
 
-  // Initialize the servo to center position (facing forward)
-  myservo.write(servoPosition);  
-  delay(1000);  // Wait 1 second
-
-  pinMode(RIGHT, INPUT);  // Set RIGHT as input (IR sensor)
-  pinMode(LEFT, INPUT);   // Set LEFT as input (IR sensor)
   
-  stop();  // Stop all motors initially
+  myservo.write(servoPosition);  
+  delay(1000);  
+
+  pinMode(RIGHT, INPUT);  
+  pinMode(LEFT, INPUT);   
+  
+  stop(); 
 
   Serial.println("Robot initialized. Starting loop...");
 }
 
 void loop() {
-  delay(50);  // Wait 50ms between pings
-  distance = sonar.ping_cm();  // Get distance from ultrasonic sensor
+  delay(50);  
+  distance = sonar.ping_cm();  
   
-  // Print the distance
+
   Serial.print("Ultrasonic Sensor Distance: ");
   Serial.print(distance);
   Serial.println(" cm");
-  
-  // Read IR sensor values
+
   Right_Value = !digitalRead(RIGHT);
   Left_Value = !digitalRead(LEFT);
   
-  // Print the IR sensor values
+ 
   Serial.print("Right IR Sensor: ");
   Serial.println(Right_Value);
   Serial.print("Left IR Sensor: ");
   Serial.println(Left_Value);
 
-  // Priority logic: IR sensors take precedence over ultrasonic sensor
+r
   if (Right_Value == 0 && Left_Value == 0) {
-    // No IR sensor detection, use ultrasonic sensor
+ 
     if (distance > 1 && distance < d) {
-      direction = 0; // Move forward
+      direction = 0; 
       moveForward();
       Serial.println("Action: Moving Forward (Ultrasonic)");
     } else {
-      direction = 3; // Stop
+      direction = 3; 
       stop();
       Serial.println("Action: Stopped (No Obstacle)");
     }
   } else if (Right_Value == 1 && Left_Value == 0) {
-    // Turn Right
+   
     direction = 1;
     turnRight();
     Serial.println("Action: Turning Right (IR)");
   } else if (Right_Value == 0 && Left_Value == 1) {
-    // Turn Left
+    
     direction = 2;
     turnLeft();
     Serial.println("Action: Turning Left (IR)");
   } else if (Right_Value == 1 && Left_Value == 1) {
-    // Both IR sensors detect obstacles; stop or move forward as a fallback
-    direction = 0; // Move forward cautiously
+    
+    direction = 0; 
     moveForward();
     Serial.println("Action: Moving Forward (Both IR)");
   }
 
-  // Update servo position based on the direction of the rover
+  
   updateServoPosition();
 }
 
@@ -142,7 +140,7 @@ void stop() {
 }
 
 void updateServoPosition() {
-  // Update the servo position based on the rover's movement direction
+
   if (direction == 0) {
     servoPosition = 90;  // Forward
   } else if (direction == 1) {
@@ -151,6 +149,5 @@ void updateServoPosition() {
     servoPosition = 120; // Left
   }
 
-  // Update the servo only if its position has changed
   myservo.write(servoPosition);
 }
